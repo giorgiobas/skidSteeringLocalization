@@ -36,7 +36,7 @@ def generate_launch_description():
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        namespace=namespace,
+        #namespace=namespace,
         name='robot_state_publisher',
         output='screen',
         parameters=[{
@@ -45,7 +45,8 @@ def generate_launch_description():
         }],
         remappings=[
             ('/tf', 'tf'),
-            ('/tf_static', 'tf_static')
+            ('/tf_static', 'tf_static'),
+            ('/robot_description', 'robot_description')
         ]
     )
 

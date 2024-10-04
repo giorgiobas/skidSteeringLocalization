@@ -328,10 +328,12 @@
 
     <plugin name='skid_steer_drive' filename='libgazebo_ros_diff_drive.so'>
       <!-- topics & remappings -->
+      <!--
       <ros>
         <namespace>/robot_namespace</namespace>
         <remapping>/tf:=tf</remapping>
       </ros>
+      -->
         
       <!-- Update rate -->
       <update_rate>50</update_rate>
@@ -359,7 +361,7 @@
 
       <!-- output -->
       <publish_odom>true</publish_odom>
-      <publish_odom_tf>false</publish_odom_tf>
+      <publish_odom_tf>true</publish_odom_tf>
       <publish_wheel_tf>false</publish_wheel_tf>
 
       <odometry_frame>odom</odometry_frame>
@@ -411,7 +413,7 @@
             <namespace>/robot_namespace</namespace>
             <remapping>~/out:=imu</remapping>
           </ros>
-          <initial_orientation_as_reference>false</initial_orientation_as_reference>
+          <initial_orientation_as_reference>true</initial_orientation_as_reference>
         </plugin>
       </sensor>
     </link>
@@ -423,6 +425,7 @@
     </joint>
 
     <!-- RPLIDAR A3 -->
+    <!--
     <link name="base_scan">
       <pose>0.15 0 0.1 0 0 0</pose>
       <inertial>
@@ -498,8 +501,10 @@
       <child>base_scan</child>
       <pose>0 0 0 0 0 0</pose>
     </joint>
+    -->
     
     <!-- GPS -->
+    <!--
     <link name="gps_link">
       <pose>-0.15 -0.125 0.3 0 0 0</pose>
       <inertial>
@@ -574,5 +579,6 @@
       <child>gps_link</child>
       <pose>0 0 0 0 0 0</pose>
     </joint>
+    -->
   </model>
 </sdf>
