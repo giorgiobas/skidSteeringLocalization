@@ -24,8 +24,8 @@ def generate_launch_description():
  
     # Arguments and parameters
     use_rviz = LaunchConfiguration('use_rviz', default='true')
-    rviz_config_file = LaunchConfiguration('rviz_config_file', default='scout_mini_localization.rviz')
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    rviz_config_file = LaunchConfiguration('rviz_config_file', default='scout_mini_localization_2d_white_gt.rviz')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
     yaw_pose = LaunchConfiguration('yaw_pose', default='0.0')
@@ -119,6 +119,19 @@ def generate_launch_description():
         parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'scoutMini.yaml')]
     )
 
+    ground_truth = Node(
+        package='robot_localization',  
+        executable='groundTruthPublisher',  
+        name='groundTruthPublisher', 
+        output='screen', 
+    )
+
+    odom_noise = Node(
+        package='robot_localization',  
+        executable='odom_noise_node',  
+        name='odom_noise_node', 
+        output='screen', 
+    )
 
     
     ld = LaunchDescription()
@@ -135,6 +148,8 @@ def generate_launch_description():
     ld.add_action(robot_spawn_cmd)
     ld.add_action(rviz_node)
     ld.add_action(localization_node)
+    ld.add_action(ground_truth)
+    ld.add_action(odom_noise)
 
     return ld
 
