@@ -17,7 +17,7 @@ public:
 
         // Subscriber
         odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>(
-            "/odomWithoutNoise", 10,
+            "/odomWithCovarianceWithoutNoise", 10,
             std::bind(&OdomNoiseNode::odom_callback, this, std::placeholders::_1));
 
         
@@ -50,19 +50,54 @@ private:
             // Random number generator
         generator_ = std::default_random_engine(std::random_device{}());
         double totalDistance = sqrt(delta_x*delta_x + delta_y*delta_y);
-        noise_distribution_ = std::normal_distribution<double>(0.0, totalDistance/3); // Mean, Stddev //0.1
+        noise_distribution_ = std::normal_distribution<double>(0.0, totalDistance/2); // Mean, Stddev //0.1
         theta_noise_distribution_ = std::normal_distribution<double>(0.0, delta_theta/3); // Mean, Stddev //0.05
-        delta_x += noise_distribution_(generator_);
-        delta_y += noise_distribution_(generator_);
-        delta_theta += theta_noise_distribution_(generator_);
 
+        delta_x += 0;
+        delta_theta += 0;
+
+        // TODO
+        // Random noise
+        /*
+        delta_y += noise_distribution_(generator_);
+        delta_x += noise_distribution_(generator_);
+        delta_theta += theta_noise_distribution_(generator_);
+        */
+        
+        
+        // TODO
+        // Multiple Steps
+        
+        //double new_theta = 0.0;
+
+        current_odom_.pose.pose.position.y = 0;
+        if(current_odom_.pose.pose.position.x>1){
+            current_odom_.pose.pose.position.y = 0.5;
+            //new_theta = 0.7;
+        }
+        if(current_odom_.pose.pose.position.x>2){
+            current_odom_.pose.pose.position.y = -0.5;
+            //new_theta = -0.7;
+        }
+        if(current_odom_.pose.pose.position.x>3){
+            current_odom_.pose.pose.position.y = 0.5;
+            //new_theta = 0.7;
+        }
+        if(current_odom_.pose.pose.position.x>4){
+            current_odom_.pose.pose.position.y = -0.5;
+            //new_theta = -0.7;
+        }
+        
         // Update current odometry
         current_odom_.pose.pose.position.x += delta_x;
-        current_odom_.pose.pose.position.y += delta_y;
+        //current_odom_.pose.pose.position.y += delta_y;
+
+        //TODO
+        //current_odom_.pose.pose.position.y = current_odom_.pose.pose.position.x;
 
         // Update orientation based on the new theta
         double new_theta = theta_previous + delta_theta;
-
+        
         tf2::Quaternion tf2_quat;
         tf2_quat.setRPY(0, 0, new_theta);
         tf2_quat.normalize();
@@ -75,23 +110,9 @@ private:
         current_odom_.header.stamp = msg->header.stamp;
         current_odom_.header.frame_id = msg->header.frame_id;
 
-        current_odom_.pose.covariance = {
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 1000000000000, 0, 0, 0,
-            0, 0, 0, 1000000000000, 0, 0,
-            0, 0, 0, 0, 1000000000000, 0,
-            0, 0, 0, 0, 0, 0.001
-        };
+        current_odom_.pose.covariance = msg->pose.covariance;
+        current_odom_.twist.covariance = msg->twist.covariance;
 
-        current_odom_.twist.covariance = {
-            0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0,
-            0, 0, 1000000000000, 0, 0, 0,
-            0, 0, 0, 1000000000000, 0, 0,
-            0, 0, 0, 0, 1000000000000, 0,
-            0, 0, 0, 0, 0, 0.001
-        };
 
         // Publish the updated odometry
         odom_publisher_->publish(current_odom_);
