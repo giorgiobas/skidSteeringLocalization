@@ -329,6 +329,10 @@
     <plugin name='skid_steer_drive' filename='libgazebo_ros_diff_drive.so'>
       <!-- topics & remappings -->
       <odometry_source>0</odometry_source> <!-- 0 = ENCODER, 1 = WORLD -->
+
+      <ros>
+        <remapping>/odom:=odomWithoutCovariance</remapping>
+      </ros>
         
       <!-- Update rate -->
       <update_rate>50</update_rate>
@@ -455,7 +459,7 @@
         <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
           <ros>
             <namespace>/robot_namespace</namespace>
-            <remapping>~/out:=imu</remapping>
+            <remapping>~/out:=imuWithoutCovariance</remapping>
           </ros>
           <initial_orientation_as_reference>true</initial_orientation_as_reference>
         </plugin>
@@ -548,7 +552,7 @@
     -->
     
     <!-- GPS -->
-    <!--
+
     <link name="gps_link">
       <pose>-0.15 -0.125 0.3 0 0 0</pose>
       <inertial>
@@ -610,7 +614,7 @@
         <plugin name="gps_controller" filename="libgazebo_ros_gps_sensor.so">
             <ros>
                 <namespace>/robot_namespace</namespace>
-                <remapping>gps_controller/out:=gps</remapping>
+                <remapping>gps_controller/out:=gps/raw</remapping>
                 <remapping>gps_controller/vel:=gps/vel</remapping>
             </ros>
             <frame_name>gps_link</frame_name>
@@ -623,6 +627,6 @@
       <child>gps_link</child>
       <pose>0 0 0 0 0 0</pose>
     </joint>
-    -->
+    
   </model>
 </sdf>

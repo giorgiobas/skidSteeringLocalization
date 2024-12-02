@@ -14,9 +14,10 @@
     <!-- Set world localization for GPS -->
     <spherical_coordinates>
       <surface_model>EARTH_WGS84</surface_model>
-      <latitude_deg>45.15</latitude_deg>
-      <longitude_deg>10.00</longitude_deg>
-      <elevation>47.00</elevation>
+      <!-- Coordiantes for Via Candiani 125, Milano -->
+      <latitude_deg>45.503154</latitude_deg>
+      <longitude_deg>9.162539</longitude_deg>
+      <elevation>136.0</elevation>
       <heading_deg>180</heading_deg>
     </spherical_coordinates>
 

@@ -1,21 +1,3 @@
-#!/usr/bin/env python3
-#
-# Copyright 2019 ROBOTIS CO., LTD.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Authors: Joep Tool
-
 import os
 
 from ament_index_python.packages import get_package_share_directory, get_package_prefix
@@ -31,7 +13,7 @@ from nav2_common.launch import ReplaceString
 def generate_launch_description():
     namespace = ''
     use_rviz = LaunchConfiguration('use_rviz', default='true')
-    rviz_config_file = LaunchConfiguration('rviz_config_file', default='scout_mini_localization_2d_white_gt2.rviz')
+    rviz_config_file = LaunchConfiguration('rviz_config_file', default='turtlebot_gps2.rviz')
 
 
     launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
@@ -45,8 +27,16 @@ def generate_launch_description():
     world = os.path.join(
         get_package_share_directory('turtlebot3_gazebo'),
         'worlds',
-        'empty_world.world'
+        'empty_world_gps.world'
     )
+
+    robot_localization_dir = get_package_share_directory('robot_localization')
+    parameters_file_dir = os.path.join(robot_localization_dir, 'params')
+    parameters_file_path = os.path.join(parameters_file_dir, 'dual_ekf_navsat_example_turtlebot.yaml')
+    os.environ['FILE_PATH'] = str(parameters_file_dir)
+
+    argument_final_position = DeclareLaunchArgument('output_final_position',default_value='false')
+    argument_yaml = DeclareLaunchArgument('output_location', default_value='~/dual_ekf_navsat_example_debug.txt')
 
     gzserver_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -103,15 +93,45 @@ def generate_launch_description():
         }.items()
     )
 
-    localization_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
+    gps_frame_publisher = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='gps_broadcaster',
+        arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'base_link', 'gps_link']
+    )
+    
+    localization_local = Node(
+        package='robot_localization', 
+        executable='ekf_node', 
+        name='ekf_filter_node_odom',
         output='screen',
-        parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'turtlebot.yaml')]
+        parameters=[parameters_file_path],
+        remappings=[('odometry/filtered', 'odometry/local')]  
     )
 
-    odom_covariance_node = Node(
+    localization_global = Node(
+        package='robot_localization', 
+        executable='ekf_node', 
+        name='ekf_filter_node_map',
+        output='screen',
+        parameters=[parameters_file_path],
+        remappings=[('odometry/filtered', 'odometry/global')]
+    )
+
+    navsat_node = Node(
+        package='robot_localization', 
+            executable='navsat_transform_node', 
+            name='navsat_transform',
+	        output='screen',
+            parameters=[parameters_file_path],
+            remappings=[('imu', 'imuWithoutCovariance'),
+                        ('gps/fix', 'gps/fix'), 
+                        ('gps/filtered', 'gps/filtered'),
+                        ('odometry/gps', 'odometry/gps'),
+                        ('odometry/filtered', 'odometry/global')]           
+    )
+
+    odom_noise_node = Node(
         package='robot_localization',  
         executable='odom_covariance_override',  
         name='odom_covariance_override', 
@@ -126,6 +146,12 @@ def generate_launch_description():
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(spawn_turtlebot_cmd)
     ld.add_action(rviz_node)
-    ld.add_action(localization_node)
-    ld.add_action(odom_covariance_node)
+    ld.add_action(localization_local)
+    ld.add_action(argument_final_position)
+    ld.add_action(argument_yaml)
+    ld.add_action(navsat_node)
+    ld.add_action(localization_global)
+    ld.add_action(gps_frame_publisher)
+    ld.add_action(odom_noise_node)
+
     return ld

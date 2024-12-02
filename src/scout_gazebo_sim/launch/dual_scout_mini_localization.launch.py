@@ -24,12 +24,16 @@ def generate_launch_description():
  
     # Arguments and parameters
     use_rviz = LaunchConfiguration('use_rviz', default='true')
-    rviz_config_file = LaunchConfiguration('rviz_config_file', default='scout_mini_localization_2d_white_gt2.rviz')
+    rviz_config_file = LaunchConfiguration('rviz_config_file', default='turtlebot_gps2.rviz')
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
     yaw_pose = LaunchConfiguration('yaw_pose', default='0.0')
     world_name = LaunchConfiguration('world_name', default='empty.world')
+
+    robot_localization_dir = get_package_share_directory('robot_localization')
+    parameters_file_dir = os.path.join(robot_localization_dir, 'params')
+    parameters_file_path = os.path.join(parameters_file_dir, 'dual_ekf_navsat_example_turtlebot.yaml')
 
     declare_world_name_arg = DeclareLaunchArgument(
         'world_name', default_value=world_name,
@@ -111,15 +115,38 @@ def generate_launch_description():
         }.items()
     )
 
-    localization_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
+    localization_local = Node(
+        package='robot_localization', 
+        executable='ekf_node', 
+        name='ekf_filter_node_odom',
         output='screen',
-        parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'scoutMini.yaml')]
+        parameters=[parameters_file_path],
+        remappings=[('odometry/filtered', 'odometry/local')]  
     )
 
-    odom_covariance_node = Node(
+    localization_global = Node(
+        package='robot_localization', 
+        executable='ekf_node', 
+        name='ekf_filter_node_map',
+        output='screen',
+        parameters=[parameters_file_path],
+        remappings=[('odometry/filtered', 'odometry/global')]
+    )
+
+    navsat_node = Node(
+        package='robot_localization', 
+            executable='navsat_transform_node', 
+            name='navsat_transform',
+	        output='screen',
+            parameters=[parameters_file_path],
+            remappings=[('imu', 'imuWithoutCovariance'),
+                        ('gps/fix', 'gps/fix'), 
+                        ('gps/filtered', 'gps/filtered'),
+                        ('odometry/gps', 'odometry/gps'),
+                        ('odometry/filtered', 'odometry/global')]           
+    )
+
+    odom_noise_node = Node(
         package='robot_localization',  
         executable='odom_covariance_override',  
         name='odom_covariance_override', 
@@ -140,8 +167,10 @@ def generate_launch_description():
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(robot_spawn_cmd)
     ld.add_action(rviz_node)
-    ld.add_action(localization_node)
-    ld.add_action(odom_covariance_node)
+    ld.add_action(localization_local)
+    ld.add_action(localization_global)
+    ld.add_action(odom_noise_node)
+    ld.add_action(navsat_node)
 
     return ld
 

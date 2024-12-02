@@ -112,7 +112,7 @@ target_link_libraries(ekf_node PRIVATE
 
 add_executable(odom_covariance_override src/odom_covariance_override.cpp)
 target_link_libraries(odom_covariance_override ${rclcpp_LIBRARIES})
-ament_target_dependencies(odom_covariance_override rclcpp nav_msgs sensor_msgs)
+ament_target_dependencies(odom_covariance_override rclcpp nav_msgs sensor_msgs tf2 tf2_geometry_msgs)
 install(TARGETS odom_covariance_override DESTINATION lib/${PROJECT_NAME})
 
 add_executable(odom_noise_node src/odom_noise_node.cpp)

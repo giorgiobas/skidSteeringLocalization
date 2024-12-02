@@ -3,10 +3,7 @@
   <model name="turtlebot3_burger">
     <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
 
-    <link name="base_footprint"/>
-
     <link name="base_link">
-
       <inertial>
         <pose>-0.032 0 0.070 0 0 0</pose>
         <inertia>
@@ -44,6 +41,9 @@
       <sensor name="tb3_imu" type="imu">
         <always_on>true</always_on>
         <update_rate>200</update_rate>
+        <orientation_reference_frame>
+          <localization>"ENU"</localization>
+        </orientation_reference_frame>
         <imu>
           <angular_velocity>
             <x>
@@ -139,6 +139,28 @@
               <min_depth>0.001</min_depth>
             </ode>
           </contact>
+          <!-- For Testing -->
+          <!--
+          <friction>
+            <ode>
+              <mu>0.9</mu>
+              <mu2>0.9</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0.001</slip1>
+              <slip2>0.001</slip2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <soft_cfm>1.0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e+5</kp>
+              <kd>1</kd>
+              <max_vel>0.01</max_vel>
+              <min_depth>0.001</min_depth>
+            </ode>
+          </contact>
+          -->
         </surface>
       </collision>
 
@@ -245,8 +267,47 @@
       </collision>
     </link>
 
+    <link name="gps_link">
+      <sensor name="gps_sensor" type="gps">
+        <always_on>1</always_on>
+        <update_rate>10.0</update_rate>
+        <pose>0 0 0 0 0 0</pose>
+        <gps>
+            <position_sensing>
+              <horizontal>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>0.01</stddev>
+                </noise>
+              </horizontal>
+              <vertical>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>0.01</stddev>
+                </noise>
+              </vertical>
+            </position_sensing>
+          </gps>
+        <plugin name="gps_plugin" filename="libgazebo_ros_gps_sensor.so">
+              <ros>
+              <!-- <namespace>/tb3</namespace> -->
+                <remapping>~/out:=/gps/raw</remapping>
+              </ros>
+        </plugin>
+      </sensor>
+    </link>
+
+    <joint name="gps_joint" type="fixed">
+      <parent>base_link</parent>
+      <child>gps_link</child>
+      <pose>0 0 0.1 0 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+      </axis>
+    </joint>
+
     <joint name="base_joint" type="fixed">
-      <parent>base_footprint</parent>
+      <parent>base_link</parent>
       <child>base_link</child>
       <pose>0.0 0.0 0.010 0 0 0</pose>
     </joint>
@@ -318,12 +379,12 @@
 
       <!-- output -->
       <publish_odom>true</publish_odom>
-      <publish_odom_tf>true</publish_odom_tf>
+      <publish_odom_tf>false</publish_odom_tf>
       <publish_wheel_tf>false</publish_wheel_tf>
 
       <odometry_topic>odom</odometry_topic>
       <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_footprint</robot_base_frame>
+      <robot_base_frame>base_link</robot_base_frame>
 
     </plugin>
 
@@ -353,12 +414,12 @@
 
       <!-- output -->
       <publish_odom>true</publish_odom>
-      <publish_odom_tf>true</publish_odom_tf>
+      <publish_odom_tf>false</publish_odom_tf>
       <publish_wheel_tf>false</publish_wheel_tf>
 
       <odometry_topic>odom</odometry_topic>
       <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_footprint</robot_base_frame>
+      <robot_base_frame>base_link</robot_base_frame>
 
     </plugin>
 
